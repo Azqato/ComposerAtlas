@@ -1,7 +1,7 @@
 # SECURITY.MD - Security Policy
 # ComposerAtlas
 
-**Version:** 1.0
+**Version:** 1.1
 **Last Updated:** 2026-06-08
 
 ---
@@ -44,10 +44,9 @@ ComposerAtlas is a fully static, browser-only website with no server infrastruct
 - Strategy descriptions and names in JSON should not contain HTML tags
 
 ### Dependency Management
-- Keep dependencies minimal
-- Audit new dependencies before adding them
-- Avoid packages with known vulnerabilities; check `npm audit` on each build
-- Pin dependency versions in `package.json` and commit `package-lock.json`
+- ComposerAtlas has **zero npm/Node.js dependencies** — no `package.json`, no `node_modules`, no supply chain risk from npm packages
+- External resources are limited to: Google Fonts CDN (fonts only; no JS)
+- If a CDN dependency is ever added, it must be loaded from an official, well-maintained source with SRI (Subresource Integrity) hash verification
 
 ### External Links
 - All links to Composer.trade and external resources must use `target="_blank"` with `rel="noopener noreferrer"` to prevent tab-napping

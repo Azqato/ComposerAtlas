@@ -1,7 +1,7 @@
 # TRD.MD - Technical Requirements Document
 # ComposerAtlas
 
-**Version:** 1.3
+**Version:** 1.4
 **Status:** Active
 **Last Updated:** 2026-06-08
 
@@ -48,10 +48,9 @@ All design tokens are defined as CSS variables in `css/main.css`. No utility fra
   --color-border:       #1f1f1f;
   --color-border-hover: #2e2e2e;
   --color-primary:      #f0f0f0;
-  --color-secondary:    #888888;
+  --color-secondary:    #b0b0b0;
   --color-disabled:     #444444;
   --color-green:        #00e676;
-  --color-green-muted:  #00a854;
   --color-pink:         #ff4d8d;
   --color-blue:         #4d9fff;
   --color-yellow:       #f5c518;
@@ -154,12 +153,21 @@ async function loadStrategies() {
 
 ```javascript
 // js/app.js — runs on every page
-const BASE = window.location.pathname.startsWith('/composeratlas')
-  ? '/composeratlas'
-  : '';
+// Extracts the first path segment and compares case-insensitively so the check
+// works on both http://localhost:8000/ and https://azqato.github.io/ComposerAtlas/.
+const _seg = window.location.pathname.split('/')[1];
+const BASE = (_seg && _seg.toLowerCase() === 'composeratlas') ? '/' + _seg : '';
 ```
 
-This detects whether the site is running on GitHub Pages (where the base path is `/composeratlas`) or locally (where the base path is empty). All navigation links and fetch calls use `BASE` as a prefix.
+This detects whether the site is running on GitHub Pages (where the base path is `/ComposerAtlas`) or locally (where the base path is empty). The case-insensitive comparison is required because the repo name is `ComposerAtlas` (capital C) and GitHub Pages preserves that casing in the URL. All navigation links and fetch calls are built with the `u(path)` helper, which prepends `BASE` for HTTP origins and resolves relative depth-based paths on `file://` protocol.
+
+```javascript
+// All internal links are built with u() not BASE + path directly:
+function u(path) {
+  if (window.location.protocol !== 'file:') return BASE + path;
+  // ... builds relative path for file:// protocol
+}
+```
 
 **Local development:** Open any `.html` file directly in a browser (double-click or drag to browser), or serve with any static file server:
 ```bash
@@ -173,13 +181,13 @@ python -m http.server 8000
 
 | URL (GitHub Pages) | File | Rendering |
 |---|---|---|
-| `/composeratlas/` | `index.html` | JS fetches strategies.json, renders grid |
-| `/composeratlas/strategies/` | `strategies/index.html` | JS renders full strategy grid |
-| `/composeratlas/strategies/detail/?slug=foo` | `strategies/detail/index.html` | JS reads slug, renders detail |
-| `/composeratlas/glossary/` | `glossary/index.html` | JS renders concept grid |
-| `/composeratlas/glossary/detail/?slug=foo` | `glossary/detail/index.html` | JS reads slug, renders detail |
-| `/composeratlas/about.html` | `about.html` | Static HTML |
-| `/composeratlas/404.html` | `404.html` | GitHub Pages error page |
+| `/ComposerAtlas/` | `index.html` | JS fetches strategies.json, renders grid |
+| `/ComposerAtlas/strategies/` | `strategies/index.html` | JS renders full strategy grid |
+| `/ComposerAtlas/strategies/detail/?slug=foo` | `strategies/detail/index.html` | JS reads slug, renders detail |
+| `/ComposerAtlas/glossary/` | `glossary/index.html` | JS renders concept grid |
+| `/ComposerAtlas/glossary/detail/?slug=foo` | `glossary/detail/index.html` | JS reads slug, renders detail |
+| `/ComposerAtlas/about.html` | `about.html` | Static HTML |
+| `/ComposerAtlas/404.html` | `404.html` | GitHub Pages error page |
 
 ---
 
@@ -198,7 +206,14 @@ python -m http.server 8000
 
 ### GitHub Actions Workflow
 
-The workflow uploads the repository root directly as a GitHub Pages artifact — no build step needed.
+The workflow uses `rsync` to build a clean `_site/` folder, excluding internal docs and large data files that are not user-facing, then uploads `_site/` to GitHub Pages.
+
+**Files excluded from public deployment:**
+- `data/symphony_scores.json` — 14MB raw EDN logic tree data; for AI analysis only
+- `docs/` — Internal project documentation
+- `scripts/` — Python data sync scripts
+- `strategies.xlsx` — Source spreadsheet
+- `README.MD`, `.gitignore`, `.github/`
 
 ```yaml
 # .github/workflows/deploy.yml
@@ -223,9 +238,23 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: actions/configure-pages@v5
+      - name: Build deploy folder
+        run: |
+          mkdir -p _site
+          rsync -a \
+            --exclude='.git' \
+            --exclude='.github' \
+            --exclude='_site' \
+            --exclude='docs' \
+            --exclude='scripts' \
+            --exclude='data/symphony_scores.json' \
+            --exclude='strategies.xlsx' \
+            --exclude='README.MD' \
+            --exclude='.gitignore' \
+            . _site/
       - uses: actions/upload-pages-artifact@v3
         with:
-          path: '.'
+          path: '_site'
       - uses: actions/deploy-pages@v4
         id: deployment
 ```
@@ -252,7 +281,7 @@ A `sitemap.xml` can be added manually or generated via a simple script in a futu
 User-agent: *
 Allow: /
 
-Sitemap: https://azqato.github.io/composeratlas/sitemap.xml
+Sitemap: https://azqato.github.io/ComposerAtlas/sitemap.xml
 ```
 
 ---

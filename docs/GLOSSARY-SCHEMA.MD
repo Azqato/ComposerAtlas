@@ -1,7 +1,7 @@
 # GLOSSARY-SCHEMA.MD - Glossary Content Structure
 # ComposerAtlas
 
-**Version:** 1.0
+**Version:** 2.0
 **Status:** Active
 **Last Updated:** 2026-06-08
 
@@ -9,39 +9,50 @@
 
 ## Overview
 
-This document defines the content structure for glossary entries. Each glossary concept is a Markdown file in `src/content/glossary/`. Astro Content Collections validates every file's frontmatter against a Zod schema at build time — a missing or wrong-type field will fail the build.
+This document defines the content structure for glossary entries. All glossary concepts are stored as objects in `data/glossary.json` (the source of truth) and duplicated in `data/glossary.js` (for `file://` protocol compatibility). There is no build step — the `glossary/detail/index.html` page reads the data at runtime and renders it dynamically.
 
 ---
 
 ## File Location
 
 ```
-src/content/glossary/[slug].md
+data/glossary.json   ← source of truth; edit this first
+data/glossary.js     ← must be kept in sync (window.GLOSSARY_DATA = [...])
 ```
 
-The filename must match the `slug` field in the frontmatter and must match the tag values used in `data/strategies.json`. See METRICS.MD for the canonical tag vocabulary.
+Both files contain the same data. After editing `glossary.json`, make the identical change in `glossary.js`.
 
 ---
 
-## Frontmatter Schema
+## JSON Entry Schema
 
 All fields below are required unless marked optional.
 
-```yaml
----
-name: string          # Display name — e.g., "RSI" or "VIX Tiers"
-slug: string          # URL slug — must match filename (e.g., "rsi", "vix-tiers")
-category: string      # One of: "indicator" | "risk-metric" | "asset-class" | "strategy-concept"
-description: string   # One-line definition used on the glossary index card and in meta tags
-formula: string       # (optional) Mathematical formula or expression — plain text or LaTeX-ish
-related_tags: array   # Tags in strategies.json that map to this concept (e.g., ["rsi"])
-last_updated: string  # ISO date of last content revision (e.g., "2026-06-08")
----
+```json
+{
+  "slug": "string",          // URL slug — e.g., "rsi", "vix-tiers". Must match tag values in strategies.json.
+  "name": "string",          // Display name — e.g., "RSI", "VIX Tiers"
+  "category": "string",      // One of: "indicator" | "risk-metric" | "asset-class" | "strategy-concept"
+  "description": "string",   // One-sentence definition; used on glossary index card and in meta tags
+  "formula": "string|null",  // (optional) Mathematical formula in plain text, or null
+  "related_tags": ["string"],// Tags in strategies.json that map to this concept (e.g., ["rsi"])
+  "last_updated": "string",  // ISO date of last content revision (e.g., "2026-06-08")
+  "sections": [              // Array of content sections rendered on the detail page
+    {
+      "title": "string",
+      "paragraphs": ["string"],
+      "table": {              // (optional) Rendered as a two-column table within the section
+        "headers": ["string"],
+        "rows": [["string"]]
+      }
+    }
+  ]
+}
 ```
 
 ### Category Values
 
-| Value | Display Label | Color | Used For |
+| Value | Display Label | Badge Color | Used For |
 |---|---|---|---|
 | `indicator` | Indicator | Blue | RSI, 200d MA, momentum signals |
 | `risk-metric` | Risk Metric | Pink | Sharpe ratio, Calmar ratio, max drawdown, std deviation |
@@ -50,15 +61,13 @@ last_updated: string  # ISO date of last content revision (e.g., "2026-06-08")
 
 ---
 
-## Body Sections
+## Sections
 
-Every glossary entry must contain all required sections in the order below. Optional sections are marked. Section headings are H2 (`##`) to maintain proper document hierarchy under the H1 page title.
+Each entry in the `sections` array has a `title` and `paragraphs` array. The page renders each string in `paragraphs` as a `<p>` tag. An optional `table` object renders a two-column reference table after the paragraphs.
 
----
+### Required Sections (in order)
 
-### Required Sections
-
-#### `## Definition`
+#### `Definition`
 
 What this concept is. 2-4 sentences. Written for a self-directed retail investor — no assumed academic background, but no condescension either. Avoid circular definitions.
 
@@ -69,30 +78,29 @@ What this concept is. 2-4 sentences. Written for a self-directed retail investor
 
 ---
 
-#### `## How It Works`
+#### `How It Works`
 
 The mechanics. How is this value calculated or determined? Walk through the logic step by step. Include the formula if applicable. Use plain English first; technical notation is secondary.
 
 **Checklist:**
 - [ ] Explains inputs → process → output
-- [ ] If the concept has a formula, it appears here (can repeat `formula` from frontmatter with context)
+- [ ] If the concept has a formula, it appears here with context
 - [ ] Includes a concrete, simple numeric example where possible
 - [ ] Does not assume knowledge of calculus or advanced statistics
 
 ---
 
-#### `## In Practice`
+#### `In Practice`
 
 How this concept appears in Composer.trade symphonies and systematic investing strategies. What does a high/low/crossing value signal? What are common threshold values used by strategy authors?
 
 **Checklist:**
 - [ ] At least one concrete example of a strategy rule using this concept (e.g., "If RSI(14) < 30, buy QQQ")
 - [ ] Explains what values are considered meaningful (e.g., RSI above 70 = overbought)
-- [ ] Links to at least one relevant strategy page using `[Strategy Name](/strategies/[slug])`
 
 ---
 
-#### `## Limitations`
+#### `Limitations`
 
 What this concept does not capture. Where does it break down? What should investors be cautious about?
 
@@ -105,111 +113,101 @@ What this concept does not capture. Where does it break down? What should invest
 
 ### Optional Sections
 
-#### `## Formula`
+Additional sections can be added for any concept that warrants them. Common examples:
 
-If the concept has a standard mathematical formula, include it here with a plain-English breakdown of each variable. Use fenced code blocks for formula notation:
-
-```
-Sharpe Ratio = (Rp − Rf) / σp
-
-Where:
-  Rp = Portfolio return
-  Rf = Risk-free rate
-  σp = Portfolio standard deviation
-```
-
-Omit this section if there is no standard formula (e.g., for asset-class concepts like "Leveraged ETFs").
+- **`Building with [Concept] in Composer.trade`** — essay on applying the concept when building symphonies; all 8 MVP entries include this
+- **`Common Thresholds`** — use a `table` to list canonical values (RSI < 30 = oversold, etc.)
+- **`Formula`** — detailed formula breakdown when the concept has standard notation
 
 ---
 
-#### `## Common Thresholds`
+## Full Example: RSI Entry
 
-For indicators with widely-used threshold values (RSI, VIX), add a reference table:
-
-| Value | Interpretation |
-|---|---|
-| RSI < 30 | Oversold — potential buy signal |
-| RSI > 70 | Overbought — potential sell signal |
-
----
-
-#### `## Related Concepts`
-
-Cross-link to other glossary entries that are closely related. Use relative links:
-
-```markdown
-See also: [Calmar Ratio](/glossary/calmar-ratio), [Standard Deviation](/glossary/standard-deviation)
+```json
+{
+  "slug": "rsi",
+  "name": "RSI",
+  "category": "indicator",
+  "description": "A momentum oscillator that measures the speed and magnitude of recent price changes, ranging from 0 to 100.",
+  "formula": "RSI = 100 - (100 / (1 + RS)) where RS = average gain / average loss over N periods",
+  "related_tags": ["rsi"],
+  "last_updated": "2026-06-08",
+  "sections": [
+    {
+      "title": "Definition",
+      "paragraphs": [
+        "RSI (Relative Strength Index) is a momentum oscillator that measures how fast and how much an asset's price has moved over a recent period, expressed as a number between 0 and 100.",
+        "A high RSI suggests the asset has risen quickly and may be overextended; a low RSI suggests it has fallen quickly and may be oversold."
+      ]
+    },
+    {
+      "title": "How It Works",
+      "paragraphs": [
+        "RSI is calculated over a lookback window — the standard is 14 periods. Calculate the average gain and average loss across all periods in the window. Divide average gain by average loss to get RS (Relative Strength), then apply: RSI = 100 − (100 / (1 + RS)).",
+        "Example: If over 14 days, average daily gain = 1.2% and average loss = 0.6%, then RS = 2.0 and RSI = 66.7."
+      ]
+    },
+    {
+      "title": "In Practice",
+      "paragraphs": [
+        "RSI is one of the most commonly used signals in Composer.trade symphonies. The zoop 2026 library uses RSI(10) for oversold dip-buys: SMH RSI < 23 → SOXL; QQQ RSI < 28 → TQQQ; SPY RSI < 28 → UPRO.",
+        "Overbought checks also use RSI: XLY RSI > 79 routes to VXX as a volatility hedge."
+      ],
+      "table": {
+        "headers": ["Threshold", "Interpretation"],
+        "rows": [
+          ["RSI < 30", "Oversold — potential dip-buy opportunity"],
+          ["RSI 30-70", "Neutral range"],
+          ["RSI > 70", "Overbought — consider reducing exposure"]
+        ]
+      }
+    },
+    {
+      "title": "Limitations",
+      "paragraphs": [
+        "RSI can stay extreme: in strong trends, RSI can remain above 70 or below 30 for extended periods. Relying solely on RSI crossings can trigger premature entries and exits.",
+        "Lookback sensitivity: A 14-period RSI on a daily chart behaves very differently from a 14-period RSI on a weekly chart.",
+        "Does not predict magnitude: RSI signals direction tendency, not how much a price will move or for how long."
+      ]
+    },
+    {
+      "title": "Building with RSI in Composer.trade",
+      "paragraphs": [
+        "RSI is best used as a secondary confirmation signal rather than a standalone entry rule. Pairing RSI with a trend filter (200d MA or cumulative return) reduces false signals in choppy markets.",
+        "Custom thresholds often outperform the standard 30/70 levels for individual ETFs. The zoop library uses RSI(10) < 23 for SMH and < 28 for QQQ and SPY — tighter than the textbook thresholds because these are short-term dip-buy signals, not full reversal entries."
+      ]
+    }
+  ]
+}
 ```
 
 ---
 
-## Full Example: RSI
+## Adding a New Glossary Entry
 
-```markdown
----
-name: "RSI"
-slug: "rsi"
-category: "indicator"
-description: "A momentum oscillator that measures the speed and magnitude of recent price changes, ranging from 0 to 100."
-formula: "RSI = 100 − (100 / (1 + RS)) where RS = average gain / average loss over N periods"
-related_tags: ["rsi"]
-last_updated: "2026-06-08"
----
+### Step 1: Add to glossary.json
 
-## Definition
+Append a new entry to the array in `data/glossary.json`.
 
-RSI (Relative Strength Index) is a momentum oscillator that measures how fast and how much an asset's price has moved over a recent period, expressed as a number between 0 and 100. It was developed by J. Welles Wilder and introduced in 1978. A high RSI suggests the asset has risen quickly and may be overextended; a low RSI suggests it has fallen quickly and may be oversold.
+### Step 2: Sync to glossary.js
 
-## How It Works
+Make the identical addition inside the `window.GLOSSARY_DATA = [...]` array in `data/glossary.js`.
 
-RSI is calculated over a lookback window — the standard is 14 periods (days, weeks, or bars depending on the chart timeframe).
+### Step 3: Tag related strategies
 
-1. Calculate the average gain across all up-periods in the window
-2. Calculate the average loss (as a positive number) across all down-periods
-3. Divide average gain by average loss to get RS (Relative Strength)
-4. Apply the formula: `RSI = 100 − (100 / (1 + RS))`
+Ensure the relevant strategies in `data/strategies.json` include this concept's slug in their `tags` array.
 
-**Example:** If over 14 days, average daily gain = 1.2% and average daily loss = 0.6%, then RS = 2.0 and RSI = 100 − (100 / 3) = **66.7**.
+### Step 4: Validate JSON
 
-## In Practice
-
-RSI is one of the most commonly used signals in Composer.trade symphonies. Strategy authors use it to filter entries and exits:
-
-- **If RSI(14) < 30, buy** — interpreted as the asset being oversold; a potential recovery opportunity
-- **If RSI(14) > 70, sell or reduce** — interpreted as overbought; reduce risk exposure
-
-Some strategies use RSI as a confirmation signal layered on top of trend indicators like the 200-day moving average.
-
-See the [VIX Tier Rotator](/strategies/vix-tier-rotator) for an example of RSI used alongside volatility signals.
-
-## Formula
-
-```
-RSI = 100 − (100 / (1 + RS))
-
-RS  = Average Gain over N periods / Average Loss over N periods
-N   = Lookback period (standard: 14)
+```bash
+python -c "import json; json.load(open('data/glossary.json')); print('Valid JSON')"
 ```
 
-## Common Thresholds
+### Step 5: Test locally
 
-| Value | Interpretation |
-|---|---|
-| RSI < 30 | Oversold — historically associated with potential recovery |
-| RSI 30–70 | Neutral range |
-| RSI > 70 | Overbought — historically associated with potential pullback |
-
-Note: These thresholds are guidelines, not rules. Many systematic strategies use custom thresholds tuned to their specific asset and timeframe.
-
-## Limitations
-
-- **RSI can stay extreme:** In strong trends, RSI can remain above 70 or below 30 for extended periods. Relying solely on RSI crossings can trigger premature entries and exits.
-- **Lookback sensitivity:** A 14-period RSI on a daily chart behaves very differently from a 14-period RSI on a weekly chart. The signal only means something relative to its timeframe.
-- **Does not predict magnitude:** RSI signals direction tendency, not how much a price will move or for how long.
-
-## Related Concepts
-
-See also: [Momentum](/glossary/momentum), [200-Day Moving Average](/glossary/200d-ma)
+```bash
+python -m http.server 8000
+# Navigate to http://localhost:8000/glossary/detail/?slug=your-slug
 ```
 
 ---
@@ -218,15 +216,15 @@ See also: [Momentum](/glossary/momentum), [200-Day Moving Average](/glossary/200
 
 Before committing a new glossary entry:
 
-- [ ] Filename matches `slug` in frontmatter
+- [ ] `slug` is lowercase, hyphen-separated, unique
 - [ ] `slug` matches a tag value used in `strategies.json` (or is documented as a standalone concept)
 - [ ] `category` is one of the four valid values
-- [ ] `description` is one sentence, under 160 characters (used in meta tags)
-- [ ] All required sections are present: Definition, How It Works, In Practice, Limitations
-- [ ] At least one cross-link to a real strategy page
-- [ ] No HTML tags in body content — Markdown only
+- [ ] `description` is one sentence, under 160 characters
+- [ ] `sections` array includes all required sections: Definition, How It Works, In Practice, Limitations
 - [ ] `last_updated` is today's date
-- [ ] Build passes locally: `npm run build`
+- [ ] Identical entry added to `data/glossary.js`
+- [ ] JSON validates: `python -c "import json; json.load(open('data/glossary.json')); print('OK')"`
+- [ ] Detail page renders correctly at `http://localhost:8000/glossary/detail/?slug=your-slug`
 
 ---
 
@@ -234,13 +232,13 @@ Before committing a new glossary entry:
 
 | Slug | Name | Category | Status |
 |---|---|---|---|
-| `rsi` | RSI | indicator | Planned |
-| `200d-ma` | 200-Day Moving Average | indicator | Planned |
-| `momentum` | Momentum Investing | strategy-concept | Planned |
-| `vix-tiers` | VIX Tiers | strategy-concept | Planned |
-| `leveraged-etfs` | Leveraged ETFs | asset-class | Planned |
-| `sharpe-ratio` | Sharpe Ratio | risk-metric | Planned |
-| `calmar-ratio` | Calmar Ratio | risk-metric | Planned |
-| `max-drawdown` | Max Drawdown | risk-metric | Planned |
+| `rsi` | RSI | indicator | Complete |
+| `200d-ma` | 200-Day Moving Average | indicator | Complete |
+| `momentum` | Momentum Investing | strategy-concept | Complete |
+| `vix-tiers` | VIX Tiers | strategy-concept | Complete |
+| `leveraged-etfs` | Leveraged ETFs | asset-class | Complete |
+| `sharpe-ratio` | Sharpe Ratio | risk-metric | Complete |
+| `calmar-ratio` | Calmar Ratio | risk-metric | Complete |
+| `max-drawdown` | Max Drawdown | risk-metric | Complete |
 
-Update status to "Complete" as each entry is written and committed.
+All 8 MVP entries are live and include a "Building with..." essay section (added v1.0.6).

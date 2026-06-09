@@ -1,7 +1,7 @@
 # METRICS.MD - Strategy Metrics Schema
 # ComposerAtlas
 
-**Version:** 1.1
+**Version:** 1.2
 **Status:** Active
 **Last Updated:** 2026-06-08
 
@@ -36,7 +36,7 @@ This document defines the full schema for strategy entries in `/data/strategies.
 | `trailing_one_year_return` | float | Yes | Return over the trailing 1-year period |
 | `backtest_days` | integer | Yes | Length of the backtest in trading days. Display as "~X years (N trading days)" using `Math.round(backtest_days / 252)`. |
 | `description` | string | Yes | Short plain-English description of the strategy (1-3 sentences). No HTML tags. |
-| `tags` | array of strings | Yes | Concept tags used for glossary cross-linking. Must match slugs in `/src/content/glossary/`. |
+| `tags` | array of strings | Yes | Concept tags used for glossary cross-linking. Must match `slug` values in `data/glossary.json`. |
 | `last_updated` | string (ISO date) | Yes | Date metrics were last updated (`YYYY-MM-DD`) |
 | `how_it_works` | array of strings | Recommended | Paragraphs explaining the strategy logic. Each string becomes a `<p>` tag on the strategy page. |
 | `signals` | array of objects | Recommended | Signals used by the strategy. Each object: `{name, tag, description}`. `tag` must match a glossary slug. |
@@ -92,8 +92,8 @@ These values represent single-period (typically monthly) returns, not annualized
 |---|---|
 | Positive return / ARR / trailing returns | `--color-green` |
 | Negative return / max_drawdown | `--color-pink` |
-| Calmar ratio, Sharpe ratio | `--color-text-primary` (no color coding) |
-| Standard deviation | `--color-text-primary` |
+| Calmar ratio, Sharpe ratio | `--color-primary` (no color coding) |
+| Standard deviation | `--color-primary` |
 | Min period return (negative) | `--color-pink` |
 | Max period return (positive) | `--color-green` |
 | Mean / median period return | `--color-yellow` (neutral indicator) |
@@ -175,7 +175,7 @@ These fields are not required at MVP but are reserved for future use. Entries th
 
 ## Tag Vocabulary
 
-Tags must match the slug of a glossary entry in `/src/content/glossary/`. The canonical tag list at MVP:
+Tags must match the `slug` of a glossary entry in `data/glossary.json`. The canonical tag list at MVP:
 
 | Tag | Glossary Slug | Concept |
 |---|---|---|

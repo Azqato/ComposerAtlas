@@ -6,6 +6,69 @@ Format: `[VERSION] - YYYY-MM-DD`
 
 ---
 
+## [1.1.5] - 2026-06-08
+
+### Fix — Stats bar values now use primary white color
+
+Homepage stats bar numbers (12 Strategies, Best Sharpe, Top ARR, 8 Concepts) were inconsistently colored — the Sharpe and ARR values had `text-green` class applied, making them green while the Strategies and Concepts counts were white. All four stat values now consistently use `--color-primary` (`#f0f0f0`).
+
+**Files changed:** `index.html`
+
+---
+
+## [1.1.4] - 2026-06-08
+
+### Docs — Full documentation audit: all 12 docs updated to reflect v1.1.x site state
+
+All documentation files in `docs/` updated to match the current state of the live site. No code changes.
+
+**TRD.MD (v1.3 → v1.4)**
+- Updated BASE URL detection snippet to the case-insensitive version (`split('/')[1]` + `.toLowerCase()`)
+- Updated `--color-secondary` from `#888888` to `#b0b0b0` in the CSS vars block; removed `--color-green-muted` (removed in v1.1.1)
+- Updated GitHub Actions workflow to show rsync-based deploy with exclusion list
+- Fixed page route table: `/composeratlas/` → `/ComposerAtlas/` (correct casing)
+- Added documentation of the `u()` URL helper function
+
+**DESIGN.MD (v1.1 → v1.2)**
+- Fixed all color token names: `--color-text-primary/secondary/disabled` → `--color-primary/secondary/disabled` (matching actual CSS)
+- Updated `--color-secondary` value from `#888888` to `#b0b0b0` (updated in v1.0.7)
+- Removed `--color-green-muted` row (removed in v1.1.1)
+- Added Footer component spec (missing from v1.1)
+- Fixed Loading States: removed incorrect claim that data is resolved at build time
+- Fixed Error States: removed Astro-specific language; describes actual runtime JSON error handling
+- Fixed Mobile Nav: removed "Implemented as Astro island" note; replaced with correct vanilla JS description
+- Updated contrast ratio for `--color-secondary`: ~5.7:1 → ~9.4:1 (brighter value)
+
+**METRICS.MD (v1.1 → v1.2)**
+- Fixed `tags` field description: `/src/content/glossary/` → `data/glossary.json`
+- Fixed color token names in Color Coding table: `--color-text-primary` → `--color-primary`
+
+**PRD.MD (v1.0 → v1.1)**
+- Updated strategy count 10 → 12 throughout
+- Fixed Dependencies section: "Chosen JS framework (TBD)" → "Vanilla HTML/CSS/JavaScript — zero build dependencies"
+
+**ROADMAP.MD (v1.0 → v1.1)**
+- Marked V1.0 as Complete (was "In Development"); added live URL
+- All V1.0 deliverables checked; count corrected 10 → 12
+- Updated V1.1 status to "In Progress (current; at v1.1.3)"; checked completed items
+- Updated V1.2 to "Partially Complete"; checked items delivered via `scripts/update_metrics.py`
+
+**SECURITY.MD (v1.0 → v1.1)**
+- Replaced npm-specific dependency management guidance with correct zero-dependency posture
+
+**GLOSSARY-SCHEMA.MD (v1.0 → v2.0)**
+- Complete rewrite: replaced Astro Content Collections / Markdown file approach with actual JSON-based structure
+- Documents `data/glossary.json` and `data/glossary.js` sync requirement
+- New JSON entry schema with all fields; section structure documented
+- Updated all 8 canonical glossary entries from "Planned" to "Complete"
+
+**PRFAQ.MD (v1.0 → v1.1)**
+- Updated strategy count reference from "10" to "12"
+
+**Files changed:** `docs/TRD.MD`, `docs/DESIGN.MD`, `docs/METRICS.MD`, `docs/PRD.MD`, `docs/ROADMAP.MD`, `docs/SECURITY.MD`, `docs/GLOSSARY-SCHEMA.MD`, `docs/PRFAQ.MD`
+
+---
+
 ## [1.1.3] - 2026-06-08
 
 ### Design — Footer simplified to match azqato.github.io

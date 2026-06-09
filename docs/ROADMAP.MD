@@ -1,59 +1,65 @@
 # ROADMAP.MD - Development Roadmap
 # ComposerAtlas
 
-**Version:** 1.0
+**Version:** 1.1
 **Status:** Active
 **Last Updated:** 2026-06-08
 
 ---
 
-## V1.0 - MVP (Current)
+## V1.0 - MVP
 
-**Target:** Launch Day (2026-06-08)
-**Status:** In Development
+**Launched:** 2026-06-08
+**Status:** Complete
+**Live URL:** https://azqato.github.io/ComposerAtlas/
 
 ### Deliverables
-- [ ] Framework selected and scaffolded by Claude Code
-- [ ] GitHub Pages deployment configured
-- [ ] `/data/strategies.json` initialized with 10 strategies
-- [ ] Strategy index page (lists all 10 with key metrics)
-- [ ] 10 individual strategy pages (logic breakdown, metrics table, Composer CTA)
-- [ ] Concept glossary index page
-- [ ] Glossary pages: RSI, 200d MA, Momentum, VIX Tiers, Leveraged ETFs, Sharpe Ratio, Calmar Ratio, Max Drawdown
-- [ ] Cross-linking: strategy pages link to glossary; glossary pages link to strategies
-- [ ] Top navigation: Strategies, Glossary, About, Support
-- [ ] About page
-- [ ] Support button linking to https://azqato.github.io/support.html
-- [ ] Dark mode design system applied (DESIGN.MD)
-- [ ] Mobile responsive layout
-- [ ] PATCHNOTES.MD entry for V1.0
+- [x] Framework selected and scaffolded by Claude Code (Vanilla HTML/CSS/JS — zero build dependencies)
+- [x] GitHub Pages deployment configured (rsync workflow; internal docs/scripts excluded from public deploy)
+- [x] `/data/strategies.json` initialized with 12 strategies
+- [x] Strategy index page (lists all 12 with key metrics)
+- [x] 12 individual strategy pages (logic breakdown, metrics table, Composer CTA)
+- [x] Concept glossary index page
+- [x] Glossary pages: RSI, 200d MA, Momentum, VIX Tiers, Leveraged ETFs, Sharpe Ratio, Calmar Ratio, Max Drawdown
+- [x] Cross-linking: strategy pages link to glossary; glossary pages link to strategies
+- [x] Top navigation: Strategies, Glossary, About, Support
+- [x] About page
+- [x] Support button linking to https://azqato.github.io/support.html
+- [x] Dark mode design system applied (DESIGN.MD)
+- [x] Mobile responsive layout
+- [x] PATCHNOTES.MD entry for V1.0
 
 ---
 
-## V1.1 - Polish + AdSense
+## V1.1 - Polish + Content Quality
 
 **Target:** Post-launch (within 2 weeks)
-**Status:** Planned
+**Status:** In Progress (current; at v1.1.3)
 
 ### Deliverables
 - [ ] Google AdSense integration after approval
 - [ ] Performance audit and optimization (load time, Lighthouse score)
-- [ ] SEO meta tags, Open Graph, and page titles
-- [ ] Favicon and social preview image
-- [ ] Fix any V1.0 bugs or UI issues
+- [x] SEO meta tags and page titles (completed in V1.0 build)
+- [x] Favicon (completed in V1.0 build)
+- [x] Fix V1.0 bugs or UI issues:
+  - [x] Navigation broken on `file://` protocol — `u()` helper added (v1.0.4)
+  - [x] All links broken on GitHub Pages — case-insensitive BASE detection (v1.1.2)
+  - [x] Footer layout simplified to match azqato.github.io (v1.1.3)
+- [x] Strategy content quality: all 12 symphonies rewritten from logic tree analysis (v1.1.0)
+- [x] Script-based metric updates: `scripts/update_metrics.py` live (v1.0.8)
 
 ---
 
 ## V1.2 - Data Tooling
 
 **Target:** 30 days post-launch
-**Status:** Planned
+**Status:** Partially Complete
 
 ### Deliverables
-- [ ] CLI script to update strategy metrics in `/data/strategies.json`
-- [ ] Script pulls from Composer API or accepts manual CSV/JSON input
+- [x] CLI script to update strategy metrics and logic trees (`scripts/update_metrics.py` — v1.0.8)
+- [x] Script pulls from Composer API (backtest + score endpoints) — no API key required
 - [ ] Validation: script checks required fields before writing
-- [ ] Documentation in RUNBOOK.MD updated
+- [x] Documentation in RUNBOOK.MD updated (v1.6)
 
 ---
 

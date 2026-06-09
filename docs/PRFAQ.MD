@@ -1,7 +1,7 @@
 # PRFAQ.MD - Press Release FAQ
 # ComposerAtlas
 
-**Version:** 1.0
+**Version:** 1.1
 **Last Updated:** 2026-06-08
 
 ---
@@ -31,7 +31,7 @@ ComposerAtlas is free to use and supported by user donations and Google AdSense.
 ### Customer / User FAQ
 
 **Q: What is ComposerAtlas?**
-A: ComposerAtlas is a free reference website that showcases curated Composer.trade strategies, explains how they work in plain language, and educates visitors on the investing concepts behind them.
+A: ComposerAtlas is a free reference website that showcases 12 curated Composer.trade strategies, explains how they work in plain language, and educates visitors on the investing concepts behind them.
 
 **Q: Who is this for?**
 A: Self-directed retail investors who use Composer.trade, are curious about systematic investing, or want to learn about concepts like RSI, VIX strategies, momentum, or leveraged ETFs.

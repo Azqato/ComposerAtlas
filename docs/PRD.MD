@@ -1,7 +1,7 @@
 # PRD.MD - Product Requirements Document
 # ComposerAtlas
 
-**Version:** 1.0
+**Version:** 1.1
 **Status:** Active
 **Last Updated:** 2026-06-08
 
@@ -24,7 +24,7 @@ Retail investors interested in rules-based, systematic investing lack a central,
 
 ## Goals
 
-- Launch a public-facing MVP with 10 strategy pages and a concept glossary
+- Launch a public-facing MVP with 12 strategy pages and a concept glossary
 - Require zero server infrastructure; run entirely in the browser via GitHub Pages
 - Establish a scalable JSON-based strategy database that can grow to thousands of entries
 - Generate passive revenue via Google AdSense (post-MVP) and direct user donations
@@ -108,7 +108,7 @@ Retail investors interested in rules-based, systematic investing lack a central,
 
 ## Success Metrics
 
-- 10 strategy pages live at launch
+- 12 strategy pages live at launch
 - Full glossary live at launch
 - Page load time under 2 seconds on desktop
 - Zero server costs at launch
@@ -129,4 +129,4 @@ Retail investors interested in rules-based, systematic investing lack a central,
 
 - Composer.trade (external platform; strategy links depend on their availability)
 - GitHub Pages (hosting)
-- Chosen JS framework (TBD by Claude Code)
+- Vanilla HTML/CSS/JavaScript — zero build dependencies; no npm/Node.js required

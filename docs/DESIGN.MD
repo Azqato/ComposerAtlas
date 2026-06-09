@@ -1,7 +1,7 @@
 # DESIGN.MD - Design System
 # ComposerAtlas
 
-**Version:** 1.1
+**Version:** 1.2
 **Status:** Active
 **Last Updated:** 2026-06-08
 
@@ -26,11 +26,10 @@ Inspired directly by Composer.trade's design system.
 | `--color-surface-raised` | `#1a1a1a` | Elevated surface, hover state |
 | `--color-border` | `#1f1f1f` | Default borders, dividers |
 | `--color-border-hover` | `#2e2e2e` | Border on hover |
-| `--color-text-primary` | `#f0f0f0` | Body text, headings |
-| `--color-text-secondary` | `#888888` | Labels, captions, metadata, muted text |
-| `--color-text-disabled` | `#444444` | Disabled states, placeholder text |
+| `--color-primary` | `#f0f0f0` | Body text, headings |
+| `--color-secondary` | `#b0b0b0` | Labels, captions, metadata, muted text |
+| `--color-disabled` | `#444444` | Disabled states, truly muted/inactive elements |
 | `--color-green` | `#00e676` | Positive returns, CTAs, active nav, highlights |
-| `--color-green-muted` | `#00e67620` | Green at 12% opacity — success backgrounds |
 | `--color-pink` | `#ff4d8d` | Negative returns, max drawdown, warnings |
 | `--color-pink-muted` | `#ff4d8d20` | Pink at 12% opacity — warning backgrounds |
 | `--color-blue` | `#4d9fff` | Links, interactive element hover borders |
@@ -302,7 +301,7 @@ Single-column, centered, max-width 768px. Sections:
 - Background: `--color-surface` with `border-b border-border`
 - Height: 56px
 - Logo: white text, bold, no icon at MVP
-- Nav links: `--color-text-secondary` default; `--color-text-primary` + green underline on active route
+- Nav links: `--color-secondary` default; `--color-primary` + green underline on active route
 - Support button: bg `--color-green`, text `--color-black`, bold, 6px border-radius, opens in new tab
 - Hover transition on links: 150ms color change
 
@@ -330,7 +329,7 @@ Hamburger (☰) opens a full-height slide-in drawer from the right:
 - Drawer: `bg-surface`, full viewport height, `w-72` (288px), slides in 200ms ease-out
 - Overlay: semi-transparent black backdrop, click-to-close
 - Nav links: large text (18px), `py-4` padding, full-width tap targets
-- Implemented as Astro island (`client:load`) for JS interactivity
+- Toggle handled by a vanilla JS event listener on `#nav-toggle` — no framework required
 
 ---
 
@@ -406,7 +405,7 @@ Used on strategy detail pages.
 └──────────────────────────────────────────┘
 ```
 
-- Metric labels: `--color-text-secondary`, 14px
+- Metric labels: `--color-secondary`, 14px
 - Values: monospace, 16px, color-coded (see METRICS.MD display guidelines)
 - Two-column layout: label left, value right-aligned
 - Horizontal rule dividers between logical groups
@@ -468,8 +467,29 @@ Used on the glossary index.
 ```
 
 - Category tag: color by category — Indicator: blue, Risk Metric: pink, Asset Class: yellow, Strategy Concept: purple
-- "Used in X strategies" — resolved at build time from strategies.json tags
+- "Used in X strategies" — count computed at runtime from strategies.json tags
 - Same hover behavior as StrategyCard (blue border lift)
+
+---
+
+### Footer
+
+Full-width centered bar at the bottom of every page. Rendered by `renderFooter()` in `js/app.js` into `<footer id="footer-root">`.
+
+```
+────────────────────────────────────────────────────
+Strategies  Glossary  About  Support  Composer.trade ↗
+Not affiliated with Composer Technologies, Inc. All metrics are backtested...
+© 2026 ComposerAtlas · Built by Azqato
+────────────────────────────────────────────────────
+```
+
+- **CSS selector:** `footer` element (not a class) — matches `<footer id="footer-root">`
+- `padding: 2rem`, `text-align: center`, `border-top: 1px solid --color-border`
+- `.footer-links`: `display:flex; flex-wrap:wrap; justify-content:center; gap:16px`
+- Link font size: 0.8rem, `--color-secondary`, hover transitions to `--color-primary`
+- `.footer-legal`: 0.75rem, `--color-secondary`, `max-width:560px`, centered
+- `.footer-copy`: 0.75rem, `--color-secondary`; "Built by" link uses `--color-blue`
 
 ---
 
@@ -481,10 +501,10 @@ Single-line navigation trail, rendered above page headers on all sub-pages.
 Home › Strategies › VIX Tier Rotator
 ```
 
-- Font: 14px, `--color-text-secondary`
+- Font: 14px, `--color-secondary`
 - Separators: `›` in secondary text
 - All items except the current page are links in `--color-blue`
-- Current page item: `--color-text-primary`, not a link
+- Current page item: `--color-primary`, not a link
 
 ---
 
@@ -498,19 +518,20 @@ Home › Strategies › VIX Tier Rotator
 
 ## Loading States
 
-At MVP, all data is resolved at build time (no runtime fetching), so traditional loading states are not required. However, for future hydrated islands:
+All data is loaded asynchronously at runtime via `window.STRATEGIES_DATA` globals (for `file://`) or `fetch()` (for HTTP). Pages show a spinner while data loads:
 
-- **Skeleton card:** animated shimmer using `--color-border` as base, `--color-surface-raised` as highlight
+- **Spinner:** animated CSS border spinner rendered inside the grid container before data arrives
+- **Skeleton card (future):** animated shimmer using `--color-border` as base, `--color-surface-raised` as highlight
 - Shimmer animation: `background: linear-gradient(90deg, ...)` swept left-to-right, 1.5s infinite
-- Skeleton dimensions match the real component to prevent layout shift (CLS = 0)
+- Skeleton dimensions should match the real component to prevent layout shift (CLS = 0)
 
 ---
 
 ## Error States
 
-- **JSON import failure at build:** CI build will fail; GitHub Actions will not deploy the broken build. This prevents a bad deployment from ever going live.
+- **JSON parse failure at runtime:** If `strategies.json` or `glossary.json` is malformed, `loadStrategies()` / `loadGlossary()` will throw. Pages catch this and render an error message in place of the grid.
 - **Broken Composer link (external):** No in-page error state for external links. A periodic manual audit process handles broken URLs (see RUNBOOK.MD).
-- **404 page:** Astro generates a `404.html` automatically. A custom `src/pages/404.astro` should be created with the site nav intact and a link back to the strategy index.
+- **404 page:** A custom `404.html` exists with the site nav intact and a link back to the strategy index. GitHub Pages serves it automatically for unmatched routes.
 
 ---
 
@@ -543,7 +564,7 @@ Target: **WCAG 2.1 Level AA**
 ### Contrast Requirements
 - Body text on background: minimum 4.5:1 (WCAG AA)
   - `#f0f0f0` on `#0d0d0d` = ~15:1 ✓
-  - `#888888` on `#0d0d0d` = ~5.7:1 ✓
+  - `#b0b0b0` on `#0d0d0d` = ~9.4:1 ✓
   - `#00e676` on `#0d0d0d` = ~8.4:1 ✓
   - `#ff4d8d` on `#0d0d0d` = ~4.6:1 ✓ (minimum; verify with production values)
   - `#000000` on `#00e676` (CTA button) = ~15:1 ✓
