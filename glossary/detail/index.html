@@ -1,0 +1,166 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Glossary concept — ComposerAtlas">
+  <title>Glossary — ComposerAtlas</title>
+  <link rel="icon" href="../../favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="../../css/main.css">
+</head>
+<body>
+  <nav class="nav" id="nav-root"></nav>
+
+  <div class="page">
+    <div class="container py-12">
+      <div id="breadcrumb-root"></div>
+      <div id="content">
+        <div class="loading"><div class="spinner"></div></div>
+      </div>
+    </div>
+  </div>
+
+  <footer id="footer-root"></footer>
+
+  <script src="../../data/strategies.js"></script>
+  <script src="../../data/glossary.js"></script>
+  <script src="../../js/app.js"></script>
+  <script>
+    (async function () {
+      const params = new URLSearchParams(window.location.search);
+      const slug = params.get('slug');
+
+      if (!slug) {
+        window.location.href = u('/glossary/');
+        return;
+      }
+
+      const [glossary, strategies] = await Promise.all([loadGlossary(), loadStrategies()]);
+      const concept = glossary.find(x => x.slug === slug);
+
+      if (!concept) {
+        document.getElementById('content').innerHTML = `
+          <div class="empty-state">
+            <p class="empty-eyebrow">Not Found</p>
+            <h1 class="empty-title">Concept not found</h1>
+            <p class="empty-desc text-secondary">No concept with slug "${slug}".</p>
+            <div class="empty-actions">
+              <a href="${u('/glossary/')}" class="btn btn-green">Browse Glossary</a>
+            </div>
+          </div>`;
+        return;
+      }
+
+      // Update page title and meta
+      document.title = `${concept.name} — ComposerAtlas Glossary`;
+      document.querySelector('meta[name="description"]').setAttribute('content', concept.description);
+
+      // Breadcrumb
+      renderBreadcrumb('breadcrumb-root', [
+        { label: 'Home', href: u('/') },
+        { label: 'Glossary', href: u('/glossary/') },
+        { label: concept.name },
+      ]);
+
+      // Category badge
+      const categoryLabels = {
+        'indicator': 'Indicator',
+        'risk-metric': 'Risk Metric',
+        'asset-class': 'Asset Class',
+        'strategy-concept': 'Strategy Concept',
+      };
+      const badgeCls = 'badge-' + concept.category;
+      const categoryLabel = categoryLabels[concept.category] || concept.category;
+
+      // Formula box
+      const formulaHtml = concept.formula
+        ? `<div class="formula-box">
+            <p class="formula-label">Formula</p>
+            <p class="formula-value">${concept.formula}</p>
+          </div>`
+        : '';
+
+      // Prose sections
+      function renderTable(table) {
+        if (!table) return '';
+        const headers = table.headers.map(h => `<th>${h}</th>`).join('');
+        const rows = table.rows.map(row =>
+          `<tr>${row.map(cell => `<td>${cell}</td>`).join('')}</tr>`
+        ).join('');
+        return `<table><thead><tr>${headers}</tr></thead><tbody>${rows}</tbody></table>`;
+      }
+
+      const sectionsHtml = (concept.sections || []).map(section => {
+        const paragraphs = section.paragraphs.map(p => `<p>${p}</p>`).join('');
+        const table = section.table ? renderTable(section.table) : '';
+        return `
+          <div style="margin-bottom:28px">
+            <h2>${section.title}</h2>
+            ${paragraphs}
+            ${table}
+          </div>`;
+      }).join('');
+
+      // Related strategies sidebar
+      const related = strategies.filter(s =>
+        s.tags && s.tags.some(t => concept.related_tags.includes(t))
+      );
+      const relatedHtml = related.length > 0
+        ? `<div>
+            <h2 style="color:var(--color-primary);font-size:1rem;font-weight:600;margin-bottom:8px">Related Strategies</h2>
+            <div class="strategy-list-compact">
+              ${related.map(renderStrategyListItem).join('')}
+            </div>
+          </div>`
+        : '';
+
+      // All glossary (excluding current) for sidebar
+      const otherConcepts = glossary.filter(c => c.slug !== slug).slice(0, 6);
+      const otherConceptsHtml = otherConcepts.length > 0
+        ? `<div style="margin-top:32px">
+            <h2 style="color:var(--color-primary);font-size:1rem;font-weight:600;margin-bottom:8px">More Concepts</h2>
+            <div class="strategy-list-compact">
+              ${otherConcepts.map(c => `
+                <a href="${u('/glossary/detail/?slug=' + c.slug)}" class="strategy-list-item">
+                  <span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${c.name}</span>
+                  <span class="badge badge-${c.category}" style="font-size:0.6875rem;flex-shrink:0">${categoryLabels[c.category] || c.category}</span>
+                </a>`).join('')}
+            </div>
+          </div>`
+        : '';
+
+      document.getElementById('content').innerHTML = `
+        <div class="grid-2">
+          <!-- Main content -->
+          <div class="detail-main">
+            <div style="margin-bottom:32px">
+              <span class="badge ${badgeCls}" style="margin-bottom:12px;display:inline-flex">${categoryLabel}</span>
+              <h1 style="color:var(--color-primary);font-size:clamp(1.5rem,3vw,2rem);margin-bottom:12px">${concept.name}</h1>
+              <p style="color:var(--color-secondary);font-size:1rem;line-height:1.7">${concept.description}</p>
+              ${formulaHtml}
+            </div>
+            <div class="prose">
+              ${sectionsHtml}
+            </div>
+          </div>
+
+          <!-- Sidebar -->
+          <div class="detail-sidebar">
+            <div class="detail-sidebar-sticky">
+              ${relatedHtml}
+              ${otherConceptsHtml}
+            </div>
+          </div>
+        </div>
+      `;
+    })().catch(err => {
+      document.getElementById('content').innerHTML = `
+        <div class="error-state">
+          <h2>Failed to load concept</h2>
+          <p>${err.message}</p>
+          <a href="${u('/glossary/')}" class="btn btn-outline" style="margin-top:16px">Back to Glossary</a>
+        </div>`;
+    });
+  </script>
+</body>
+</html>

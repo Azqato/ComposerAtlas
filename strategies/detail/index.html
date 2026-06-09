@@ -1,0 +1,176 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Strategy detail — ComposerAtlas">
+  <title>Strategy — ComposerAtlas</title>
+  <link rel="icon" href="../../favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="../../css/main.css">
+</head>
+<body>
+  <nav class="nav" id="nav-root"></nav>
+
+  <div class="page">
+    <div class="container py-12">
+      <div id="breadcrumb-root"></div>
+      <div id="content">
+        <div class="loading"><div class="spinner"></div></div>
+      </div>
+    </div>
+  </div>
+
+  <footer id="footer-root"></footer>
+
+  <script src="../../data/strategies.js"></script>
+  <script src="../../data/glossary.js"></script>
+  <script src="../../js/app.js"></script>
+  <script>
+    (async function () {
+      const params = new URLSearchParams(window.location.search);
+      const slug = params.get('slug');
+
+      if (!slug) {
+        window.location.href = u('/strategies/');
+        return;
+      }
+
+      const [strategies, glossary] = await Promise.all([loadStrategies(), loadGlossary()]);
+      const s = strategies.find(x => x.slug === slug);
+
+      if (!s) {
+        document.getElementById('content').innerHTML = `
+          <div class="empty-state">
+            <p class="empty-eyebrow">Not Found</p>
+            <h1 class="empty-title">Strategy not found</h1>
+            <p class="empty-desc text-secondary">No strategy with slug "${slug}".</p>
+            <div class="empty-actions">
+              <a href="${u('/strategies/')}" class="btn btn-green">Browse Strategies</a>
+            </div>
+          </div>`;
+        return;
+      }
+
+      // Update page title and meta
+      document.title = `${s.name} — ComposerAtlas`;
+      document.querySelector('meta[name="description"]').setAttribute('content', s.description);
+
+      // Breadcrumb
+      renderBreadcrumb('breadcrumb-root', [
+        { label: 'Home', href: u('/') },
+        { label: 'Strategies', href: u('/strategies/') },
+        { label: s.name },
+      ]);
+
+      // Tags
+      const tags = (s.tags || []).map(renderTag).join('');
+
+      // How it works
+      const howItWorks = s.how_it_works && s.how_it_works.length
+        ? `<section class="mb-10">
+            <h2 style="color:var(--color-primary);margin-bottom:16px">How It Works</h2>
+            ${s.how_it_works.map(p => `<p style="color:var(--color-secondary);font-size:0.9375rem;line-height:1.75;margin-bottom:12px">${p}</p>`).join('')}
+          </section>`
+        : '';
+
+      // Signals
+      const signals = s.signals && s.signals.length
+        ? `<section class="mb-10">
+            <h2 style="color:var(--color-primary);margin-bottom:16px">Signals &amp; Logic</h2>
+            ${s.signals.map(sig => `
+              <div class="signal-card">
+                <div class="signal-header">
+                  <span class="signal-name">${sig.name}</span>
+                  ${renderTag(sig.tag)}
+                </div>
+                <p class="signal-desc">${sig.description}</p>
+              </div>`).join('')}
+          </section>`
+        : '';
+
+      // Risk profile
+      const riskProfile = s.risk_profile
+        ? `<section class="mb-10">
+            <h2 style="color:var(--color-primary);margin-bottom:16px">Risk Profile</h2>
+            <div class="risk-box">${s.risk_profile}</div>
+          </section>`
+        : '';
+
+      // Sidebar: other strategies
+      const others = strategies.filter(x => x.slug !== s.slug).slice(0, 10);
+      const othersList = others.map(renderStrategyListItem).join('');
+
+      // Metrics (desktop hidden on mobile, shown inline)
+      const metricsHtml = renderMetricsTable(s);
+
+      document.getElementById('content').innerHTML = `
+        <div class="grid-2">
+          <!-- Main -->
+          <div class="detail-main">
+            <div class="mb-8">
+              ${tags ? `<div class="card-tags" style="margin-bottom:12px">${tags}</div>` : ''}
+              <h1 style="color:var(--color-primary);font-size:clamp(1.5rem,3vw,2rem);margin-bottom:12px">${s.name}</h1>
+              <p style="color:var(--color-secondary);font-size:1rem;line-height:1.7">${s.description}</p>
+            </div>
+
+            <div class="mb-10">
+              <a href="${s.symphony_url}" target="_blank" rel="noopener noreferrer"
+                class="btn btn-green btn-lg">
+                Open in Composer ↗
+              </a>
+            </div>
+
+            ${howItWorks}
+            ${signals}
+            ${riskProfile}
+
+            <!-- Metrics (mobile only) -->
+            <div style="display:block" class="detail-mobile-metrics">
+              <h2 style="color:var(--color-primary);font-size:1.125rem;margin-bottom:16px">Performance Metrics</h2>
+              ${metricsHtml}
+            </div>
+          </div>
+
+          <!-- Sidebar -->
+          <div class="detail-sidebar">
+            <div class="detail-sidebar-sticky">
+              <!-- Metrics (desktop) -->
+              <div class="detail-desktop-metrics">
+                <h2 style="color:var(--color-primary);font-size:1rem;font-weight:600;margin-bottom:16px">Performance Metrics</h2>
+                ${metricsHtml}
+              </div>
+
+              <!-- Other strategies -->
+              <div style="margin-top:32px">
+                <h2 style="color:var(--color-primary);font-size:1rem;font-weight:600;margin-bottom:8px">Other Strategies</h2>
+                <div class="strategy-list-compact">
+                  ${othersList}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      `;
+
+      // Responsive: hide mobile metrics on desktop and vice-versa
+      const style = document.createElement('style');
+      style.textContent = `
+        .detail-mobile-metrics { display: block; margin-top: 40px; }
+        .detail-desktop-metrics { display: none; }
+        @media (min-width: 1024px) {
+          .detail-mobile-metrics { display: none; }
+          .detail-desktop-metrics { display: block; }
+        }
+      `;
+      document.head.appendChild(style);
+    })().catch(err => {
+      document.getElementById('content').innerHTML = `
+        <div class="error-state">
+          <h2>Failed to load strategy</h2>
+          <p>${err.message}</p>
+          <a href="${u('/strategies/')}" class="btn btn-outline" style="margin-top:16px">Back to Strategies</a>
+        </div>`;
+    });
+  </script>
+</body>
+</html>
