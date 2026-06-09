@@ -848,7 +848,7 @@ footer {
 
 .footer-legal {
   font-size: 0.75rem;
-  color: var(--color-disabled);
+  color: var(--color-secondary);
   line-height: 1.6;
   max-width: 560px;
   margin: 0 auto 0.5rem;
@@ -856,7 +856,7 @@ footer {
 
 .footer-copy {
   font-size: 0.75rem;
-  color: var(--color-disabled);
+  color: var(--color-secondary);
 }
 
 .footer-copy a {
