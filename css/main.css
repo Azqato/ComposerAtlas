@@ -823,7 +823,7 @@ p { color: var(--color-secondary); }
 }
 
 /* ---- Footer ---- */
-.footer {
+footer {
   border-top: 1px solid var(--color-border);
   background: var(--color-bg);
   padding: 2rem;
